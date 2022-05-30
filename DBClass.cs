@@ -132,7 +132,7 @@ public class DBConnect
         string query = $"SELECT {columns} FROM {table} WHERE {where}";
 
         //Create a list to store the result
-        List< string >[] list = new List< string >[count_columns];
+        List <string>[] list = new List <string>[count_columns];
         for (int i = 0; i < count_columns; i++)
         {
             list[i] = new List<string>();
@@ -144,6 +144,7 @@ public class DBConnect
             //Create Command
             MySqlCommand cmd = new MySqlCommand(query, connection);
             MySqlDataReader dataReader = cmd.ExecuteReader();
+
             while (dataReader.Read())
             {
                 for (int i = 0; i < count_columns; i++)
@@ -151,18 +152,36 @@ public class DBConnect
                     string value = dataReader.GetString(i);
                     list[i].Add(value);
                 }
-                //list[0].Add(dataReader["id"] + "");
-                //list[1].Add(dataReader["name"] + "");
-                //list[2].Add(dataReader["age"] + "");
+                
             }
 
-            //close Data Reader
-            dataReader.Close();
+            if (list[0].Count != 0)
+            {
 
-            //close Connection
-            this.CloseConnection();
 
-            return list;
+                List<string>[] result = new List<string>[list[0].Count];
+
+                for (int i = 0; i < list[0].Count; i++)
+                {
+                    result[i] = new List<string>();
+                    for (int k = 0; k < count_columns; k++)
+                    {
+                        result[i].Add(list[k][i]);
+                    }
+
+                }
+
+
+                //close Data Reader
+                dataReader.Close();
+
+                //close Connection
+                this.CloseConnection();
+
+                return result;
+            }
+
+            return null;
         }
         else
         {
