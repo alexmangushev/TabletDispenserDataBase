@@ -5,8 +5,49 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TabletDispenserAdminPanel"
         mc:Ignorable="d"
+        Closing="DataWindow_Closing" 
         Title="MainWindow" Height="450" Width="800">
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="150"></RowDefinition>
+            <RowDefinition ></RowDefinition>
+        </Grid.RowDefinitions>
 
+        <!-- ********** up bar *********** -->
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+                <ColumnDefinition></ColumnDefinition>
+            </Grid.ColumnDefinitions>
+
+            <ComboBox x:Name="SelectTableComboBox"  Height="25" MaxWidth="250" 
+                      SelectionChanged="ChangeTableComboBox" >
+                <ComboBoxItem>
+                    <TextBlock>Пациенты</TextBlock>
+                </ComboBoxItem>
+                <ComboBoxItem>
+                    <TextBlock>Диагнозы</TextBlock>
+                </ComboBoxItem>
+                <ComboBoxItem>
+                    <TextBlock>События</TextBlock>
+                </ComboBoxItem>
+            </ComboBox>
+
+            <StackPanel Grid.Column="1" >
+                <Button x:Name="ButtonDelete" Content="Удалить" Height="25" Width="100" Margin="10"></Button>
+                <Button x:Name="ButtonSave" Content="Сохранить" Height="25" Width="100" Margin="10"></Button>
+                <Button x:Name="ButtonCreate" Content="Добавить" Height="25" Width="100" Margin="10"></Button>
+            </StackPanel>
+            
+            
+        </Grid>
+
+        <!-- *********** table *********** -->
+        <Grid Grid.Row="1">
+            <DataGrid x:Name="DBGrid"/>
+
+
+        </Grid>
     </Grid>
 </Window>
