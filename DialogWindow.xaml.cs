@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -38,6 +39,10 @@ namespace TabletDispenserAdminPanel
                 res = List.SelectedIndex;
                 this.Close();
             }
+        }
+        private void DataWindow_Closing(object sender, CancelEventArgs e)
+        {
+            e.Cancel = false;
         }
     }
 }

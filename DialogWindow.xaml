@@ -4,8 +4,9 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:TabletDispenserAdminPanel"
-        mc:Ignorable="d"
-        Title="DialogWindow" Height="450" Width="400">
+        mc:Ignorable="d" FontSize="14"
+        Closing="DataWindow_Closing"
+        Title="DialogWindow" Height="450" Width="500">
     <Grid>
         <Grid.ColumnDefinitions>
             <ColumnDefinition ></ColumnDefinition>

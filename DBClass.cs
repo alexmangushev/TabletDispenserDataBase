@@ -413,5 +413,68 @@ public class DBConnect
         }
 
     }
+    
+    //Рассчитать на время до разряда устройства
+    public double GetPreparationTime (int id)
+    {
+        
+        string query = @"
+            select telemetry_charge * 0.05 as `time` from telemetry
+            where id_patients = @id
+            order by telemetry_time desc
+            limit 1;";
 
+        double time = 0;
+
+        if (this.OpenConnection() == true)
+        {
+
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+            MySqlParameter idParam = new MySqlParameter("@id", id);
+            cmd.Parameters.Add(idParam);
+
+            MySqlDataReader dataReader = cmd.ExecuteReader();
+            while (dataReader.Read())
+            {
+                time = dataReader.GetDouble(0);
+            }
+            dataReader.Close();
+            this.CloseConnection();
+            
+        }
+        return time;
+    }
+
+    //топ 3 пациента по количеству принимаемых препаратов(фио кол-во) сортировку по кол-во
+    public void GetTopThree(out int[] count, out string[] FIO)
+    {
+        count = new int[3] {0, 0, 0 };
+        FIO = new string[3] {"", "", "" };
+
+        string query = @"
+            select concat_ws(' ', p.patient_last_name,p.patient_first_name,p.patient_patronymic) as FIO, 
+            sum(pils_count) as `count`
+            from plan_receptions as pl
+            join patients as p on p.id_patients = pl.id_patient
+            group by id_patients
+            order by `count` desc, FIO asc
+            limit 3;";
+
+        if (this.OpenConnection() == true)
+        {
+            int i = 0;
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+
+            MySqlDataReader dataReader = cmd.ExecuteReader();
+            while (dataReader.Read())
+            {
+                FIO[i] = dataReader.GetString(0);
+                count[i] = dataReader.GetInt32(1);
+                i++;
+            }
+            dataReader.Close();
+            this.CloseConnection();
+        }
+
+    }
 }

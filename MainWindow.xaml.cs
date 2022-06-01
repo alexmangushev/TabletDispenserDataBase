@@ -78,7 +78,6 @@ namespace TabletDispenserAdminPanel
                         pat = (Patient)DBGrid.Items.GetItemAt(i);
                         pat.UpdatePatientFromDB(DataBase);
                         patient_table = Patient.GetPatientFromDB(DataBase);
-                        DBGrid.ItemsSource = patient_table;
                     }
                     break;
 
@@ -89,7 +88,6 @@ namespace TabletDispenserAdminPanel
                         tel = (Telemetry)DBGrid.Items.GetItemAt(i);
                         tel.UpdateTelemetryFromDB(DataBase);
                         telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
-                        DBGrid.ItemsSource = telemetry_table;
                     }
                     break;
             }
@@ -153,7 +151,7 @@ namespace TabletDispenserAdminPanel
                         temp=-1,bar=0,charge=101 };
                     tel.CreateTelemetryIntoDB(DataBase);
                     telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
-                    DBGrid.ItemsSource = telemetry_table;
+                    DBGrid.ItemsSource = telemetry_table; 
                     break;
             }
         }
@@ -164,15 +162,41 @@ namespace TabletDispenserAdminPanel
                 Telemetry tel = (Telemetry)DBGrid.SelectedItem;
                 int cur_index = DBGrid.Items.IndexOf(tel);
                 DialogWindow choose = new DialogWindow(DataBase);
-                choose.Owner = this;
-                choose.ShowDialog();
                 patient_table = Patient.GetPatientFromDB(DataBase);
+                for (int i = 0; i < patient_table.Count; i++)
+                {
+                    if (patient_table[i].ID == tel.id_patient)
+                        choose.res = i;
+                }
+                choose.ShowDialog();
                 telemetry_table[cur_index].id_patient = patient_table[choose.res].ID;
                 telemetry_table[cur_index].patient = patient_table[choose.res].first_name + " "
-                    + patient_table[choose.res].patronymic + "" + patient_table[choose.res].last_name;
-                DBGrid.ItemsSource = telemetry_table;
+                    + patient_table[choose.res].patronymic + " " + patient_table[choose.res].last_name;
             }
         }
+
+        private void TextBoxPatient_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            patient_table = Patient.GetPatientFromDB(DataBase);
+            DialogWindow choose = new DialogWindow(DataBase);
+            choose.ShowDialog();
+            TextBoxPatient.Text = patient_table[choose.res].first_name + " "
+                    + patient_table[choose.res].patronymic + " " + patient_table[choose.res].last_name;
+            
+            TextBoxAns.Text = "Время до разряда устройства = " + Math.Round(DataBase.GetPreparationTime(choose.res), 3).ToString() + " Часов";
+        }
+
+        private void ListBoxAns_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            string[] FIO;
+            int[] count;
+            DataBase.GetTopThree(out count, out FIO);
+            ListBoxAns.Items.Clear();
+            ListBoxAns.Items.Add(FIO[0] + " - " + count[0] + " принимаемых препаратов");
+            ListBoxAns.Items.Add(FIO[1] + " - " + count[1] + " принимаемых препаратов");
+            ListBoxAns.Items.Add(FIO[2] + " - " + count[2] + " принимаемых препаратов");
+        }
+
         private void DataWindow_Closing(object sender, CancelEventArgs e)
         {
             e.Cancel = true;
@@ -183,5 +207,6 @@ namespace TabletDispenserAdminPanel
         // member will be decorated with a [DisplayNameAttribute]
         private void DataGrid_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
             => e.Column.Header = ((PropertyDescriptor)e.PropertyDescriptor)?.DisplayName ?? e.Column.Header;
+
     }
 }
