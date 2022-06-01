@@ -32,9 +32,9 @@
             </ComboBox>
 
             <StackPanel Grid.Column="1" >
-                <Button x:Name="ButtonDelete" Content="Удалить" Height="25" Width="100" Margin="10"></Button>
+                <Button x:Name="ButtonDelete" Click="DeleteButton" Content="Удалить" Height="25" Width="100" Margin="10"></Button>
                 <Button x:Name="ButtonSave" Click="SaveButton" Content="Сохранить" Height="25" Width="100" Margin="10"></Button>
-                <Button x:Name="ButtonCreate" Content="Добавить" Height="25" Width="100" Margin="10"></Button>
+                <Button x:Name="ButtonCreate" Click="CreateButton" Content="Добавить" Height="25" Width="100" Margin="10"></Button>
             </StackPanel>
             
             
@@ -50,6 +50,7 @@
                        AutoGeneratingColumn="DataGrid_AutoGeneratingColumn"
                       Visibility="Hidden" 
                       CellEditEnding="EditCell"
+                      MouseDoubleClick="DBGrid_MouseDoubleClick"
                       CanUserSortColumns="False"
                       />
         </Grid>

@@ -1,6 +1,7 @@
 ﻿using MySql.Data.MySqlClient;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Windows;
 
 /// <summary>
@@ -77,67 +78,16 @@ public class DBConnect
             return false;
         }
     }
-
-    //Insert statement
-    public void Insert(string table, string columns, string values)
+    
+    public List<string>[] SelectPatient()
     {
-        string query = $"INSERT INTO {table} ({columns}) VALUES({values})";
-
-        //open connection
-        if (this.OpenConnection() == true)
-        {
-            //create command and assign the query and connection from the constructor
-            MySqlCommand cmd = new MySqlCommand(query, connection);
-            //Execute command
-            cmd.ExecuteNonQuery();
-
-            //close connection
-            this.CloseConnection();
-        }
-    }
-
-    //Update statement
-    public void Update(string table, string values, string where)
-    {
-        //string query = "UPDATE tableinfo SET name='Joe', age='22' WHERE name='John Smith'";
-        string query = $"UPDATE {table} SET {values} WHERE {where}";
-
-        //Open connection
-        if (this.OpenConnection() == true)
-        {
-            MySqlCommand cmd = new MySqlCommand(query, connection);
-            //cmd.Parameters
-            cmd.ExecuteNonQuery();
-            this.CloseConnection();
-        }
-    }
-
-    //Delete statement
-    public void Delete(string table, string where)
-    {
-        string query = $"DELETE FROM {table} WHERE {where}";
-
-        if (this.OpenConnection() == true)
-        {
-            MySqlCommand cmd = new MySqlCommand(query, connection);
-            cmd.ExecuteNonQuery();
-            this.CloseConnection();
-        }
-    }
-
-    //Select statement
-    public List<string>[] Select(string table, string columns, int count_columns, string where)
-    {
-        string query = $"SELECT {columns} FROM {table} WHERE {where}";
-
-        //Create a list to store the result
-        List <string>[] list = new List <string>[count_columns];
-        for (int i = 0; i < count_columns; i++)
+        string query = $"SELECT * FROM patients WHERE id_patients != 0";
+        List<string>[] list = new List<string>[6];
+        for (int i = 0; i < 6; i++)
         {
             list[i] = new List<string>();
         }
 
-        //Open connection
         if (this.OpenConnection() == true)
         {
             //Create Command
@@ -146,40 +96,30 @@ public class DBConnect
 
             while (dataReader.Read())
             {
-                for (int i = 0; i < count_columns; i++)
+                for (int i = 0; i < 6; i++)
                 {
                     string value = dataReader.GetString(i);
                     list[i].Add(value);
                 }
-                
             }
 
             if (list[0].Count != 0)
             {
-
-
                 List<string>[] result = new List<string>[list[0].Count];
 
                 for (int i = 0; i < list[0].Count; i++)
                 {
                     result[i] = new List<string>();
-                    for (int k = 0; k < count_columns; k++)
+                    for (int k = 0; k < 6; k++)
                     {
                         result[i].Add(list[k][i]);
                     }
-
                 }
-
-
-                //close Data Reader
                 dataReader.Close();
-
-                //close Connection
                 this.CloseConnection();
 
                 return result;
             }
-
             return null;
         }
         else
@@ -187,9 +127,117 @@ public class DBConnect
             return list;
         }
     }
-    public List<string>[] SelectPatient()
+    public void UpdatePatient(Patient ptn)
     {
-        string query = $"SELECT * FROM patients WHERE id_patients != 0";
+        DateTime parsedDate;
+        DateTime.TryParseExact(ptn.born, "d", null, DateTimeStyles.None, out parsedDate);
+
+        string sqlExpression = @"UPDATE patients SET 
+            patient_phone=@phone, patient_born=@born, patient_first_name=@name,
+            patient_patronymic=@patronymic, patient_last_name=@last_name 
+            where id_patients=@id";
+
+        //Open connection
+        if (this.OpenConnection() == true)
+        {
+            MySqlCommand cmd = new MySqlCommand(sqlExpression, connection);
+
+            // создаем параметр
+            MySqlParameter phoneParam = new MySqlParameter("@phone", ptn.phone);
+            // добавляем параметр к команде
+            cmd.Parameters.Add(phoneParam);
+
+            MySqlParameter bornParam = new MySqlParameter("@born", parsedDate.ToString("yyyy-MM-dd"));
+            cmd.Parameters.Add(bornParam);
+
+            MySqlParameter nameParam = new MySqlParameter("@name", ptn.first_name);
+            cmd.Parameters.Add(nameParam);
+
+            MySqlParameter patronymicParam = new MySqlParameter("@patronymic", ptn.patronymic);
+            cmd.Parameters.Add(patronymicParam);
+
+            MySqlParameter lastParam = new MySqlParameter("@last_name", ptn.last_name);
+            cmd.Parameters.Add(lastParam);
+
+            MySqlParameter idParam = new MySqlParameter("@id", ptn.ID);
+            cmd.Parameters.Add(idParam);
+
+            cmd.ExecuteNonQuery();
+            this.CloseConnection();
+        }
+    }
+    public void DeletePatient(Patient ptn)
+    {
+        string query = "DELETE FROM patients WHERE id_patients=@id";
+
+        if (this.OpenConnection() == true)
+        {
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+
+            MySqlParameter idParam = new MySqlParameter("@id", ptn.ID);
+            cmd.Parameters.Add(idParam);
+
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (MySqlException ex)
+            {
+                switch (ex.Number)
+                {
+                    case 1451:
+                        MessageBox.Show("Невозможно удалить запись, имеется зависимость в других элементах базы данных");
+                        break;
+                }
+            }
+
+            this.CloseConnection();
+        }
+    }
+    public void CreatePatient(Patient ptn)
+    {
+        DateTime parsedDate;
+        DateTime.TryParseExact(ptn.born, "d", null, DateTimeStyles.None, out parsedDate);
+
+        string sqlExpression = @"INSERT INTO patients 
+            (patient_phone, patient_born, patient_first_name,
+            patient_patronymic, patient_last_name)
+            VALUES(@phone,@born,@name,@patronymic,@last_name)";
+
+        //Open connection
+        if (this.OpenConnection() == true)
+        {
+            MySqlCommand cmd = new MySqlCommand(sqlExpression, connection);
+
+            MySqlParameter phoneParam = new MySqlParameter("@phone", ptn.phone);
+            cmd.Parameters.Add(phoneParam);
+
+            MySqlParameter bornParam = new MySqlParameter("@born", parsedDate.ToString("yyyy-MM-dd"));
+            cmd.Parameters.Add(bornParam);
+
+            MySqlParameter nameParam = new MySqlParameter("@name", ptn.first_name);
+            cmd.Parameters.Add(nameParam);
+
+            MySqlParameter patronymicParam = new MySqlParameter("@patronymic", ptn.patronymic);
+            cmd.Parameters.Add(patronymicParam);
+
+            MySqlParameter lastParam = new MySqlParameter("@last_name", ptn.last_name);
+            cmd.Parameters.Add(lastParam);
+
+            cmd.ExecuteNonQuery();
+            this.CloseConnection();
+        }
+    }
+
+
+    public List<string>[] SelectTelemetry()
+    {
+        string query = @"select t.telemetry_time, p.id_patients, t.telemetry_temp, t.telemetry_bar, t.telemetry_charge,
+            concat_ws(' ',p.patient_first_name,p.patient_patronymic,p.patient_last_name)
+            from patients as p
+            join telemetry as t
+            on p.id_patients = t.id_patients;";
 
         //Create a list to store the result
         List<string>[] list = new List<string>[6];
@@ -212,12 +260,9 @@ public class DBConnect
                     string value = dataReader.GetString(i);
                     list[i].Add(value);
                 }
-
             }
-
             if (list[0].Count != 0)
             {
-
                 List<string>[] result = new List<string>[list[0].Count];
 
                 for (int i = 0; i < list[0].Count; i++)
@@ -229,16 +274,10 @@ public class DBConnect
                     }
 
                 }
-
-                //close Data Reader
                 dataReader.Close();
-
-                //close Connection
                 this.CloseConnection();
-
                 return result;
             }
-
             return null;
         }
         else
@@ -246,64 +285,133 @@ public class DBConnect
             return list;
         }
     }
-    public List<string>[] SelectTelemetry()
+    public void UpdateTelemetry(Telemetry tel)
     {
-        string query = $"SELECT * FROM telemetry WHERE telemetry_time is not null";
+        string query = @"UPDATE telemetry SET 
+            telemetry_time=@time, id_patients=@pat,
+            telemetry_temp=@temp, telemetry_bar=@bar, telemetry_charge=@charge
+            where telemetry_time=@time_old and id_patients=@pat_old";
 
-        //Create a list to store the result
-        List<string>[] list = new List<string>[5];
-        for (int i = 0; i < 5; i++)
-        {
-            list[i] = new List<string>();
-        }
+        DateTime parsedDate;
+        DateTime.TryParseExact(tel.time, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate);
+        DateTime parsedDate2;
+        DateTime.TryParseExact(tel.time_old, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate2);
 
-        //Open connection
         if (this.OpenConnection() == true)
         {
-            //Create Command
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+
+            MySqlParameter timeParam = new MySqlParameter("@time", parsedDate.ToString("yyyy-MM-dd HH:mm:ss"));
+            cmd.Parameters.Add(timeParam);
+            MySqlParameter patientParam = new MySqlParameter("@pat", tel.id_patient);
+            cmd.Parameters.Add(patientParam);
+            MySqlParameter temptParam = new MySqlParameter("@temp", tel.temp);
+            cmd.Parameters.Add(temptParam);
+            MySqlParameter barParam = new MySqlParameter("@bar", tel.bar);
+            cmd.Parameters.Add(barParam);
+            MySqlParameter chargeParam = new MySqlParameter("@charge", tel.charge);
+            cmd.Parameters.Add(chargeParam);
+            MySqlParameter timeOldParam = new MySqlParameter("@time_old", parsedDate2.ToString("yyyy-MM-dd HH:mm:ss"));
+            cmd.Parameters.Add(timeOldParam);
+            MySqlParameter patientOldParam = new MySqlParameter("@pat_old", tel.id_patient_old);
+            cmd.Parameters.Add(patientOldParam);
+
+            cmd.ExecuteNonQuery();
+            this.CloseConnection();
+        }
+
+    }
+    public void DeleteTelemetry(Telemetry tel)
+    {
+        string query = "DELETE FROM telemetry WHERE telemetry_time=@time and id_patients=@pat";
+        DateTime parsedDate;
+        DateTime.TryParseExact(tel.time, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate);
+
+
+        if (this.OpenConnection() == true)
+        {
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+
+            MySqlParameter timeParam = new MySqlParameter("@time", parsedDate.ToString("yyyy-MM-dd HH:mm:ss"));
+            cmd.Parameters.Add(timeParam);
+            MySqlParameter patientParam = new MySqlParameter("@pat", tel.id_patient);
+            cmd.Parameters.Add(patientParam);
+
+            try
+            {
+                cmd.ExecuteNonQuery();
+            }
+            catch (MySqlException ex)
+            {
+                switch (ex.Number)
+                {
+                    case 1451:
+                        MessageBox.Show("Невозможно удалить запись, имеется зависимость в других элементах базы данных");
+                        break;
+                }
+            }
+
+            this.CloseConnection();
+        }
+    }
+    public void CreateTelemetry(Telemetry tel)
+    {
+        string query = @"INSERT INTO telemetry 
+            (telemetry_time, id_patients, 
+            telemetry_temp,telemetry_bar,telemetry_charge)
+            VALUES(@time,@pat,@temp,@bar,@charge)";
+
+        DateTime parsedDate;
+        DateTime.TryParseExact(tel.time, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate);
+        DateTime parsedDate2;
+        DateTime.TryParseExact(tel.time_old, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate2);
+
+        if (this.OpenConnection() == true)
+        {
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+
+            MySqlParameter timeParam = new MySqlParameter("@time", parsedDate.ToString("yyyy-MM-dd HH:mm:ss"));
+            cmd.Parameters.Add(timeParam);
+            MySqlParameter patientParam = new MySqlParameter("@pat", tel.id_patient);
+            cmd.Parameters.Add(patientParam);
+            MySqlParameter temptParam = new MySqlParameter("@temp", tel.temp);
+            cmd.Parameters.Add(temptParam);
+            MySqlParameter barParam = new MySqlParameter("@bar", tel.bar);
+            cmd.Parameters.Add(barParam);
+            MySqlParameter chargeParam = new MySqlParameter("@charge", tel.charge);
+            cmd.Parameters.Add(chargeParam);
+
+            cmd.ExecuteNonQuery();
+            this.CloseConnection();
+        }
+    }
+    public void GetPrimaryKey(out DateTime time, out int id_patient)
+    {
+        time = DateTime.Now;
+        id_patient = 0;
+        string? time_string = null;
+
+        string query = @"select telemetry_time, id_patients
+                from telemetry
+                order by telemetry_time desc
+                limit 1;";
+        if (this.OpenConnection() == true)
+        {
             MySqlCommand cmd = new MySqlCommand(query, connection);
             MySqlDataReader dataReader = cmd.ExecuteReader();
 
+
             while (dataReader.Read())
             {
-                for (int i = 0; i < 5; i++)
-                {
-                    string value = dataReader.GetString(i);
-                    list[i].Add(value);
-                }
-
+                time_string = dataReader.GetString(0);
+                id_patient = dataReader.GetInt32(1);
             }
+            dataReader.Close();
+            this.CloseConnection();
 
-            if (list[0].Count != 0)
-            {
-
-                List<string>[] result = new List<string>[list[0].Count];
-
-                for (int i = 0; i < list[0].Count; i++)
-                {
-                    result[i] = new List<string>();
-                    for (int k = 0; k < 5; k++)
-                    {
-                        result[i].Add(list[k][i]);
-                    }
-
-                }
-
-                //close Data Reader
-                dataReader.Close();
-
-                //close Connection
-                this.CloseConnection();
-
-                return result;
-            }
-
-            return null;
+            DateTime.TryParseExact(time_string, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out time);
         }
-        else
-        {
-            return list;
-        }
+
     }
 
 }

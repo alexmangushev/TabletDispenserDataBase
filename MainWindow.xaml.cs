@@ -21,14 +21,6 @@ namespace TabletDispenserAdminPanel
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// 
-
-    //********************
-    // Разнести по классам запросы для bd
-    // делаем запрос в бд конкретную таблицу и получаем list не обобщенный, а значений конкретного класса
-    // Сделать запросы параметризированными
-    // 2 таблицы с crud, 2 аналит запроса
-    // во второй таблице выбирать пациента через listwidget
-    //*******************
     public partial class MainWindow : Window
     {
         DBConnect DataBase;
@@ -42,6 +34,9 @@ namespace TabletDispenserAdminPanel
 
         public string current_table_select;
         List<int> row_for_update = new List<int>();
+        public int id_from_another_window { get; set; }
+        List<Patient> patient_table;
+        List<Telemetry> telemetry_table;
 
         private void ChangeTableComboBox(object sender, SelectionChangedEventArgs e)
         {
@@ -60,12 +55,12 @@ namespace TabletDispenserAdminPanel
             {
                 
                 case "Пациенты":
-                    List<Patient> patient_table = Patient.GetPatientFromDB(DataBase);
+                    patient_table = Patient.GetPatientFromDB(DataBase);
                     DBGrid.ItemsSource = patient_table;
                     break;
 
                 case "Телеметрия":
-                    List<Telemetry> telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
+                    telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
                     DBGrid.ItemsSource = telemetry_table;
                     break;
             }
@@ -74,47 +69,32 @@ namespace TabletDispenserAdminPanel
 
         private void SaveButton(object sender, RoutedEventArgs e)
         {
-            string table_updt;
-            string where;
-            string values;
-
             switch (current_table_select)
             {
-
                 case "Пациенты":
                     Patient pat;
                     foreach (int i in row_for_update)
                     {
                         pat = (Patient)DBGrid.Items.GetItemAt(i);
-                        DateTime parsedDate;
-                        DateTime.TryParseExact(pat.born, "d", null, DateTimeStyles.None, out parsedDate);
-
-                        table_updt = "patients";
-                        where = $"id_patients = \"{pat.ID}\"";
-                        values = $"patient_phone = \"{pat.phone}\", patient_born = \"{parsedDate.ToString("yyyy-MM-dd")}\", " +
-                            $"patient_first_name = \"{pat.first_name}\", patient_patronymic = \"{pat.patronymic}\", " +
-                            $"patient_last_name = \"{pat.last_name}\"";
-                        DataBase.Update(table_updt,values,where);
+                        pat.UpdatePatientFromDB(DataBase);
+                        patient_table = Patient.GetPatientFromDB(DataBase);
+                        DBGrid.ItemsSource = patient_table;
                     }
                     break;
 
                 case "Телеметрия":
-                    
-
+                    Telemetry tel;
+                    foreach (int i in row_for_update)
+                    {
+                        tel = (Telemetry)DBGrid.Items.GetItemAt(i);
+                        tel.UpdateTelemetryFromDB(DataBase);
+                        telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
+                        DBGrid.ItemsSource = telemetry_table;
+                    }
                     break;
             }
         }
-        /*
-        private void Row_MouseDoubleClick(object sender, MouseButtonEventArgs e)
-        {
-            // Ensure row was clicked and not empty space
-            var row = ItemsControl.ContainerFromElement((DataGrid)sender,
-                                                e.OriginalSource as DependencyObject) as DataGridRow;
-
-            if (row == null) return;
-
-        }*/
-
+       
         private void EditCell(object sender, DataGridCellEditEndingEventArgs e)
         {
             switch (current_table_select)
@@ -131,8 +111,68 @@ namespace TabletDispenserAdminPanel
                     break;
             }
         }
+        private void DeleteButton(object sender, RoutedEventArgs e)
+        {
+            switch (current_table_select)
+            {
+                case "Пациенты":
+                    Patient pat = (Patient)DBGrid.SelectedItem;
+                    pat.DeletePatientFromDB(DataBase);
+                    patient_table = Patient.GetPatientFromDB(DataBase);
+                    DBGrid.ItemsSource = patient_table;
+                    break;
 
+                case "Телеметрия":
+                    Telemetry tel = (Telemetry)DBGrid.SelectedItem;
+                    tel.DeleteTelemetryFromDB(DataBase);
+                     telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
+                    DBGrid.ItemsSource = telemetry_table;
+                    break;
+            }
+        }
 
+        private void CreateButton(object sender, RoutedEventArgs e)
+        {
+            switch (current_table_select)
+            {
+                case "Пациенты":
+                    Patient pat = new Patient { phone="0-000-000-00", born="01.01.1900", 
+                        first_name="Нулл",last_name= "Нулл",patronymic= "Нулл"
+                    };
+                    pat.CreatePatientIntoDB(DataBase);
+                    patient_table = Patient.GetPatientFromDB(DataBase);
+                    DBGrid.ItemsSource = patient_table;
+                    break;
+
+                case "Телеметрия":
+                    string time;
+                    int id_patient;
+                    Telemetry.GetNewPrimaryKey(DataBase, out time, out id_patient);
+                    Telemetry tel = new Telemetry { 
+                        id_patient = id_patient, time= time, 
+                        temp=-1,bar=0,charge=101 };
+                    tel.CreateTelemetryIntoDB(DataBase);
+                    telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
+                    DBGrid.ItemsSource = telemetry_table;
+                    break;
+            }
+        }
+        private void DBGrid_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+        {
+            if (current_table_select == "Телеметрия")
+            {
+                Telemetry tel = (Telemetry)DBGrid.SelectedItem;
+                int cur_index = DBGrid.Items.IndexOf(tel);
+                DialogWindow choose = new DialogWindow(DataBase);
+                choose.Owner = this;
+                choose.ShowDialog();
+                patient_table = Patient.GetPatientFromDB(DataBase);
+                telemetry_table[cur_index].id_patient = patient_table[choose.res].ID;
+                telemetry_table[cur_index].patient = patient_table[choose.res].first_name + " "
+                    + patient_table[choose.res].patronymic + "" + patient_table[choose.res].last_name;
+                DBGrid.ItemsSource = telemetry_table;
+            }
+        }
         private void DataWindow_Closing(object sender, CancelEventArgs e)
         {
             e.Cancel = true;
@@ -143,6 +183,5 @@ namespace TabletDispenserAdminPanel
         // member will be decorated with a [DisplayNameAttribute]
         private void DataGrid_AutoGeneratingColumn(object sender, DataGridAutoGeneratingColumnEventArgs e)
             => e.Column.Header = ((PropertyDescriptor)e.PropertyDescriptor)?.DisplayName ?? e.Column.Header;
-    
     }
 }
