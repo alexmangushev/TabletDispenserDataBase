@@ -88,7 +88,6 @@ public class DBConnect
         {
             //create command and assign the query and connection from the constructor
             MySqlCommand cmd = new MySqlCommand(query, connection);
-
             //Execute command
             cmd.ExecuteNonQuery();
 
@@ -107,6 +106,7 @@ public class DBConnect
         if (this.OpenConnection() == true)
         {
             MySqlCommand cmd = new MySqlCommand(query, connection);
+            //cmd.Parameters
             cmd.ExecuteNonQuery();
             this.CloseConnection();
         }
@@ -115,7 +115,6 @@ public class DBConnect
     //Delete statement
     public void Delete(string table, string where)
     {
-        //string query = "DELETE FROM tableinfo WHERE name='John Smith'";
         string query = $"DELETE FROM {table} WHERE {where}";
 
         if (this.OpenConnection() == true)
@@ -132,7 +131,7 @@ public class DBConnect
         string query = $"SELECT {columns} FROM {table} WHERE {where}";
 
         //Create a list to store the result
-        List< string >[] list = new List< string >[count_columns];
+        List <string>[] list = new List <string>[count_columns];
         for (int i = 0; i < count_columns; i++)
         {
             list[i] = new List<string>();
@@ -144,6 +143,7 @@ public class DBConnect
             //Create Command
             MySqlCommand cmd = new MySqlCommand(query, connection);
             MySqlDataReader dataReader = cmd.ExecuteReader();
+
             while (dataReader.Read())
             {
                 for (int i = 0; i < count_columns; i++)
@@ -151,18 +151,154 @@ public class DBConnect
                     string value = dataReader.GetString(i);
                     list[i].Add(value);
                 }
-                //list[0].Add(dataReader["id"] + "");
-                //list[1].Add(dataReader["name"] + "");
-                //list[2].Add(dataReader["age"] + "");
+                
             }
 
-            //close Data Reader
-            dataReader.Close();
+            if (list[0].Count != 0)
+            {
 
-            //close Connection
-            this.CloseConnection();
 
+                List<string>[] result = new List<string>[list[0].Count];
+
+                for (int i = 0; i < list[0].Count; i++)
+                {
+                    result[i] = new List<string>();
+                    for (int k = 0; k < count_columns; k++)
+                    {
+                        result[i].Add(list[k][i]);
+                    }
+
+                }
+
+
+                //close Data Reader
+                dataReader.Close();
+
+                //close Connection
+                this.CloseConnection();
+
+                return result;
+            }
+
+            return null;
+        }
+        else
+        {
             return list;
+        }
+    }
+    public List<string>[] SelectPatient()
+    {
+        string query = $"SELECT * FROM patients WHERE id_patients != 0";
+
+        //Create a list to store the result
+        List<string>[] list = new List<string>[6];
+        for (int i = 0; i < 6; i++)
+        {
+            list[i] = new List<string>();
+        }
+
+        //Open connection
+        if (this.OpenConnection() == true)
+        {
+            //Create Command
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+            MySqlDataReader dataReader = cmd.ExecuteReader();
+
+            while (dataReader.Read())
+            {
+                for (int i = 0; i < 6; i++)
+                {
+                    string value = dataReader.GetString(i);
+                    list[i].Add(value);
+                }
+
+            }
+
+            if (list[0].Count != 0)
+            {
+
+                List<string>[] result = new List<string>[list[0].Count];
+
+                for (int i = 0; i < list[0].Count; i++)
+                {
+                    result[i] = new List<string>();
+                    for (int k = 0; k < 6; k++)
+                    {
+                        result[i].Add(list[k][i]);
+                    }
+
+                }
+
+                //close Data Reader
+                dataReader.Close();
+
+                //close Connection
+                this.CloseConnection();
+
+                return result;
+            }
+
+            return null;
+        }
+        else
+        {
+            return list;
+        }
+    }
+    public List<string>[] SelectTelemetry()
+    {
+        string query = $"SELECT * FROM telemetry WHERE telemetry_time is not null";
+
+        //Create a list to store the result
+        List<string>[] list = new List<string>[5];
+        for (int i = 0; i < 5; i++)
+        {
+            list[i] = new List<string>();
+        }
+
+        //Open connection
+        if (this.OpenConnection() == true)
+        {
+            //Create Command
+            MySqlCommand cmd = new MySqlCommand(query, connection);
+            MySqlDataReader dataReader = cmd.ExecuteReader();
+
+            while (dataReader.Read())
+            {
+                for (int i = 0; i < 5; i++)
+                {
+                    string value = dataReader.GetString(i);
+                    list[i].Add(value);
+                }
+
+            }
+
+            if (list[0].Count != 0)
+            {
+
+                List<string>[] result = new List<string>[list[0].Count];
+
+                for (int i = 0; i < list[0].Count; i++)
+                {
+                    result[i] = new List<string>();
+                    for (int k = 0; k < 5; k++)
+                    {
+                        result[i].Add(list[k][i]);
+                    }
+
+                }
+
+                //close Data Reader
+                dataReader.Close();
+
+                //close Connection
+                this.CloseConnection();
+
+                return result;
+            }
+
+            return null;
         }
         else
         {
@@ -170,18 +306,4 @@ public class DBConnect
         }
     }
 
-    //Count statement
-    /*public int Count()
-    {
-    }*/
-
-    //Backup
-    public void Backup()
-    {
-    }
-
-    //Restore
-    public void Restore()
-    {
-    }
 }

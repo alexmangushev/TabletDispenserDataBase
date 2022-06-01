@@ -27,16 +27,13 @@
                     <TextBlock>Пациенты</TextBlock>
                 </ComboBoxItem>
                 <ComboBoxItem>
-                    <TextBlock>Диагнозы</TextBlock>
-                </ComboBoxItem>
-                <ComboBoxItem>
-                    <TextBlock>События</TextBlock>
+                    <TextBlock>Телеметрия</TextBlock>
                 </ComboBoxItem>
             </ComboBox>
 
             <StackPanel Grid.Column="1" >
                 <Button x:Name="ButtonDelete" Content="Удалить" Height="25" Width="100" Margin="10"></Button>
-                <Button x:Name="ButtonSave" Content="Сохранить" Height="25" Width="100" Margin="10"></Button>
+                <Button x:Name="ButtonSave" Click="SaveButton" Content="Сохранить" Height="25" Width="100" Margin="10"></Button>
                 <Button x:Name="ButtonCreate" Content="Добавить" Height="25" Width="100" Margin="10"></Button>
             </StackPanel>
             
@@ -44,10 +41,17 @@
         </Grid>
 
         <!-- *********** table *********** -->
-        <Grid Grid.Row="1">
-            <DataGrid x:Name="DBGrid"/>
-
-
+        <Grid Grid.Row="1" Margin="12">
+            <DataGrid x:Name="DBGrid" 
+                      AutoGenerateColumns="True"  
+                      HorizontalAlignment="Center"
+                      CanUserResizeColumns="False" 
+                      CanUserResizeRows="False"
+                       AutoGeneratingColumn="DataGrid_AutoGeneratingColumn"
+                      Visibility="Hidden" 
+                      CellEditEnding="EditCell"
+                      CanUserSortColumns="False"
+                      />
         </Grid>
     </Grid>
 </Window>
