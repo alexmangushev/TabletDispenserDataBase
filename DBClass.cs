@@ -91,8 +91,8 @@ public class DBConnect
         if (this.OpenConnection() == true)
         {
             //Create Command
-            MySqlCommand cmd = new MySqlCommand(query, connection);
-            MySqlDataReader dataReader = cmd.ExecuteReader();
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlDataReader dataReader = cmd.ExecuteReader();
 
             while (dataReader.Read())
             {
@@ -130,7 +130,7 @@ public class DBConnect
     public void UpdatePatient(Patient ptn)
     {
         DateTime parsedDate;
-        DateTime.TryParseExact(ptn.born, "d", null, DateTimeStyles.None, out parsedDate);
+        bool true_date = DateTime.TryParseExact(ptn.born, "d", null, DateTimeStyles.None, out parsedDate);
 
         string sqlExpression = @"UPDATE patients SET 
             patient_phone=@phone, patient_born=@born, patient_first_name=@name,
@@ -140,7 +140,7 @@ public class DBConnect
         //Open connection
         if (this.OpenConnection() == true)
         {
-            MySqlCommand cmd = new MySqlCommand(sqlExpression, connection);
+            using MySqlCommand cmd = new MySqlCommand(sqlExpression, connection);
 
             // создаем параметр
             MySqlParameter phoneParam = new MySqlParameter("@phone", ptn.phone);
@@ -162,7 +162,26 @@ public class DBConnect
             MySqlParameter idParam = new MySqlParameter("@id", ptn.ID);
             cmd.Parameters.Add(idParam);
 
-            cmd.ExecuteNonQuery();
+            if (true_date)
+            {
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (MySqlException ex)
+                {
+                    switch (ex.Number)
+                    {
+                        case 1451:
+                            MessageBox.Show("Невозможно обновить запись, некорректные данные");
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Невозможно обновить запись, некорректные данные");
+            }
             this.CloseConnection();
         }
     }
@@ -172,7 +191,7 @@ public class DBConnect
 
         if (this.OpenConnection() == true)
         {
-            MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
 
             MySqlParameter idParam = new MySqlParameter("@id", ptn.ID);
             cmd.Parameters.Add(idParam);
@@ -208,7 +227,7 @@ public class DBConnect
         //Open connection
         if (this.OpenConnection() == true)
         {
-            MySqlCommand cmd = new MySqlCommand(sqlExpression, connection);
+            using MySqlCommand cmd = new MySqlCommand(sqlExpression, connection);
 
             MySqlParameter phoneParam = new MySqlParameter("@phone", ptn.phone);
             cmd.Parameters.Add(phoneParam);
@@ -250,8 +269,8 @@ public class DBConnect
         if (this.OpenConnection() == true)
         {
             //Create Command
-            MySqlCommand cmd = new MySqlCommand(query, connection);
-            MySqlDataReader dataReader = cmd.ExecuteReader();
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlDataReader dataReader = cmd.ExecuteReader();
 
             while (dataReader.Read())
             {
@@ -293,13 +312,13 @@ public class DBConnect
             where telemetry_time=@time_old and id_patients=@pat_old";
 
         DateTime parsedDate;
-        DateTime.TryParseExact(tel.time, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate);
+        bool true_old_date = DateTime.TryParseExact(tel.time, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate);
         DateTime parsedDate2;
-        DateTime.TryParseExact(tel.time_old, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate2);
+        bool true_date = DateTime.TryParseExact(tel.time_old, "dd.MM.yyyy H:mm:ss", null, DateTimeStyles.None, out parsedDate2);
 
         if (this.OpenConnection() == true)
         {
-            MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
 
             MySqlParameter timeParam = new MySqlParameter("@time", parsedDate.ToString("yyyy-MM-dd HH:mm:ss"));
             cmd.Parameters.Add(timeParam);
@@ -316,7 +335,26 @@ public class DBConnect
             MySqlParameter patientOldParam = new MySqlParameter("@pat_old", tel.id_patient_old);
             cmd.Parameters.Add(patientOldParam);
 
-            cmd.ExecuteNonQuery();
+            if (true_date && true_old_date)
+            {
+                try
+                {
+                    cmd.ExecuteNonQuery();
+                }
+                catch (MySqlException ex)
+                {
+                    switch (ex.Number)
+                    {
+                        case 1451:
+                            MessageBox.Show("Невозможно обновить запись, некорректные данные");
+                            break;
+                    }
+                }
+            }
+            else
+            {
+                MessageBox.Show("Невозможно обновить запись, некорректные данные");
+            }
             this.CloseConnection();
         }
 
@@ -330,7 +368,7 @@ public class DBConnect
 
         if (this.OpenConnection() == true)
         {
-            MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
 
             MySqlParameter timeParam = new MySqlParameter("@time", parsedDate.ToString("yyyy-MM-dd HH:mm:ss"));
             cmd.Parameters.Add(timeParam);
@@ -368,7 +406,7 @@ public class DBConnect
 
         if (this.OpenConnection() == true)
         {
-            MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
 
             MySqlParameter timeParam = new MySqlParameter("@time", parsedDate.ToString("yyyy-MM-dd HH:mm:ss"));
             cmd.Parameters.Add(timeParam);
@@ -397,8 +435,8 @@ public class DBConnect
                 limit 1;";
         if (this.OpenConnection() == true)
         {
-            MySqlCommand cmd = new MySqlCommand(query, connection);
-            MySqlDataReader dataReader = cmd.ExecuteReader();
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlDataReader dataReader = cmd.ExecuteReader();
 
 
             while (dataReader.Read())
@@ -429,11 +467,11 @@ public class DBConnect
         if (this.OpenConnection() == true)
         {
 
-            MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
             MySqlParameter idParam = new MySqlParameter("@id", id);
             cmd.Parameters.Add(idParam);
 
-            MySqlDataReader dataReader = cmd.ExecuteReader();
+            using MySqlDataReader dataReader = cmd.ExecuteReader();
             while (dataReader.Read())
             {
                 time = dataReader.GetDouble(0);
@@ -463,9 +501,9 @@ public class DBConnect
         if (this.OpenConnection() == true)
         {
             int i = 0;
-            MySqlCommand cmd = new MySqlCommand(query, connection);
+            using MySqlCommand cmd = new MySqlCommand(query, connection);
 
-            MySqlDataReader dataReader = cmd.ExecuteReader();
+            using MySqlDataReader dataReader = cmd.ExecuteReader();
             while (dataReader.Read())
             {
                 FIO[i] = dataReader.GetString(0);

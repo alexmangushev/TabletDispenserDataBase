@@ -33,7 +33,7 @@ namespace TabletDispenserAdminPanel
         }
 
         public string current_table_select;
-        List<int> row_for_update = new List<int>();
+        HashSet<int> row_for_update = new HashSet<int>();
         public int id_from_another_window { get; set; }
         List<Patient> patient_table;
         List<Telemetry> telemetry_table;
@@ -77,8 +77,10 @@ namespace TabletDispenserAdminPanel
                     {
                         pat = (Patient)DBGrid.Items.GetItemAt(i);
                         pat.UpdatePatientFromDB(DataBase);
-                        patient_table = Patient.GetPatientFromDB(DataBase);
                     }
+                    patient_table = Patient.GetPatientFromDB(DataBase);
+                    DBGrid.ItemsSource = patient_table;
+                    row_for_update.Clear();
                     break;
 
                 case "Телеметрия":
@@ -87,8 +89,10 @@ namespace TabletDispenserAdminPanel
                     {
                         tel = (Telemetry)DBGrid.Items.GetItemAt(i);
                         tel.UpdateTelemetryFromDB(DataBase);
-                        telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
                     }
+                    telemetry_table = Telemetry.GetTelemetryFromDB(DataBase);
+                    DBGrid.ItemsSource = telemetry_table;
+                    row_for_update.Clear();
                     break;
             }
         }
